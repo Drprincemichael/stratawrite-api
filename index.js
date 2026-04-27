@@ -24,7 +24,7 @@ const server = http.createServer((req, res) => {
             'x-api-key': process.env.ANTHROPIC_API_KEY,
             'anthropic-version': '2023-06-01',
           },
-          body: JSON.stringify(parsed),
+          body: JSON.stringify({...parsed, model: 'claude-haiku-4-5-20251001'}),
         });
         console.log('Anthropic status:', response.status);
         const data = await response.json();
