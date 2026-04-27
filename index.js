@@ -4,22 +4,24 @@ const server = http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS, GET');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Content-Type', 'application/json');
 
   if (req.method === 'OPTIONS') {
     res.writeHead(200);
-    return res.end();
+    return res.end('{}');
   }
 
-  if (req.method === 'GET' && req.url === '/health') {
-    res.writeHead(200, {'Content-Type': 'application/json'});
-    return res.end(JSON.stringify({status: 'ok', service: 'StrataWrite API'}));
+  if (req.method === 'GET') {
+    res.writeHead(200);
+    return res.end(JSON.stringify({status: 'ok', service: 'StrataWrite API', method: req.method, url: req.url}));
   }
 
   if (req.method === 'POST') {
     let body = '';
-    req.on('data', chunk => body += chunk);
+    req.on('data', chunk => { body += chunk.toString(); });
     req.on('end', async () => {
       try {
+        const parsed = JSON.parse(body || '{}');
         const response = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',
           headers: {
@@ -27,21 +29,21 @@ const server = http.createServer(async (req, res) => {
             'x-api-key': process.env.ANTHROPIC_API_KEY,
             'anthropic-version': '2023-06-01',
           },
-          body: body,
+          body: JSON.stringify(parsed),
         });
         const data = await response.json();
-        res.writeHead(response.status, {'Content-Type': 'application/json'});
+        res.writeHead(response.status);
         res.end(JSON.stringify(data));
       } catch (error) {
-        res.writeHead(500, {'Content-Type': 'application/json'});
+        res.writeHead(500);
         res.end(JSON.stringify({error: error.message}));
       }
     });
     return;
   }
 
-  res.writeHead(404, {'Content-Type': 'application/json'});
-  res.end(JSON.stringify({error: 'Not found'}));
+  res.writeHead(404);
+  res.end(JSON.stringify({error: 'Not found', method: req.method, url: req.url}));
 });
 
 const PORT = process.env.PORT || 8080;
