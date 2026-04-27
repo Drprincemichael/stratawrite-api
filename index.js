@@ -15,7 +15,7 @@ const server = http.createServer(async (req, res) => {
     return res.end(JSON.stringify({status: 'ok', service: 'StrataWrite API'}));
   }
 
-  if (req.method === 'POST' && req.url === '/api/claude') {
+  if (req.method === 'POST') {
     let body = '';
     req.on('data', chunk => body += chunk);
     req.on('end', async () => {
